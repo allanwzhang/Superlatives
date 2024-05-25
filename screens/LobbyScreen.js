@@ -1,24 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
 
-function LobbyScreen({ navigation }) {
-  const [name, setName] = useState('');
+function LobbyScreen({ navigation, route }) {
+  const [code, setCode] = useState(0);
+  // TODO: This should be an array of names of all the users but for now its just one
+  const [name, setName] = useState("");
 
-  const handleJoinLobby = () => {
+  // TODO: Code won't be generated every time this screen is loaded, should have some logic with database
+  useEffect(() => {
+    console.log(route.params)
+    if(route.params && route.params.name) {
+      setName(route.params.name);
+      if(route.params.code) {
+        setCode(route.params.code);
+      } else {
+        setCode(Math.floor(100000 + Math.random() * 900000));
+      }
+    }
+  }, []);
+
+  const handleStartGame = () => {
     // TODO: Implement joining lobby logic
     navigation.navigate('Question');
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Enter Your Name</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Your Name"
-        value={name}
-        onChangeText={setName}
-      />
-      <Button title="Join Lobby" onPress={handleJoinLobby} />
+      <Text style={styles.title}>Code: {code}</Text>
+      <Text>{name}</Text>
+      <Button title="Start" onPress={handleStartGame} />
     </View>
   );
 }
@@ -35,12 +45,19 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 20,
   },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  label: {
+    marginRight: 10,
+  },
   input: {
-    width: '100%',
+    flex: 1,
     height: 40,
     borderWidth: 1,
     borderColor: 'gray',
-    marginBottom: 20,
     paddingHorizontal: 10,
   },
 });
