@@ -1,25 +1,44 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
+import { View, Text, Button, StyleSheet, TouchableOpacity } from 'react-native';
+
+const colors = ['Red', 'Blue', 'Green', 'Yellow'];
 
 function QuestionScreen({ navigation }) {
-  const [answer, setAnswer] = useState('');
+  const [selectedAnswer, setSelectedAnswer] = useState(null);
+  const [colors, setColors] = useState(['Red', 'Blue', 'Green', 'Yellow']);
 
   const handleSubmitAnswer = () => {
     // TODO: Implement submitting answer logic
-    navigation.navigate('Results');
+    navigation.navigate('Results', { answer: selectedAnswer });
+  };
+
+  const handleSelectAnswer = (answer) => {
+    setSelectedAnswer(answer);
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Question</Text>
       <Text style={styles.question}>What is your favorite color?</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Your Answer"
-        value={answer}
-        onChangeText={setAnswer}
+      <View style={styles.optionsContainer}>
+        {colors.map((color, index) => (
+          <TouchableOpacity
+            key={index}
+            style={[
+              styles.optionButton,
+              selectedAnswer === color && styles.selectedOptionButton,
+            ]}
+            onPress={() => handleSelectAnswer(color)}
+          >
+            <Text style={styles.optionText}>{color}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+      <Button
+        title="Submit Answer"
+        onPress={handleSubmitAnswer}
+        disabled={!selectedAnswer}
       />
-      <Button title="Submit Answer" onPress={handleSubmitAnswer} />
     </View>
   );
 }
@@ -39,14 +58,24 @@ const styles = StyleSheet.create({
   question: {
     fontSize: 18,
     marginBottom: 20,
+    textAlign: 'center',
   },
-  input: {
+  optionsContainer: {
     width: '100%',
-    height: 40,
-    borderWidth: 1,
-    borderColor: 'gray',
     marginBottom: 20,
-    paddingHorizontal: 10,
+  },
+  optionButton: {
+    backgroundColor: '#DDDDDD',
+    padding: 15,
+    marginVertical: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+  },
+  selectedOptionButton: {
+    backgroundColor: '#AAAAAA',
+  },
+  optionText: {
+    fontSize: 16,
   },
 });
 

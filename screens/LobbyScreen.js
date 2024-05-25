@@ -8,7 +8,6 @@ function LobbyScreen({ navigation, route }) {
 
   // TODO: Code won't be generated every time this screen is loaded, should have some logic with database
   useEffect(() => {
-    console.log(route.params)
     if(route.params && route.params.name) {
       setName(route.params.name);
       if(route.params.code) {
@@ -24,11 +23,17 @@ function LobbyScreen({ navigation, route }) {
     navigation.navigate('Question');
   };
 
+  const handleLeaveLobby = () => {
+    // TODO: Implement joining lobby logic
+    navigation.navigate('Start');
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Code: {code}</Text>
       <Text>{name}</Text>
       <Button title="Start" onPress={handleStartGame} />
+      <Button title="Leave" onPress={handleLeaveLobby} />
     </View>
   );
 }
