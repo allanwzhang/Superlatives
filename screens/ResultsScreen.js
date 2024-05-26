@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Dimensions, Button } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import { PieChart } from 'react-native-chart-kit';
 
 function ResultsScreen({ navigation }) {
@@ -36,13 +36,13 @@ function ResultsScreen({ navigation }) {
   ];
 
   const handleScoreboard = () => {
-    navigation.navigate("Scoreboard");
+    navigation.navigate('Scoreboard');
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Results</Text>
-      <Text>Winner: Rob!</Text>
+      <Text style={styles.winner}>Winner: Rob!</Text>
       <PieChart
         data={data}
         width={Dimensions.get('window').width - 40}
@@ -62,7 +62,9 @@ function ResultsScreen({ navigation }) {
         paddingLeft="15"
         absolute
       />
-      <Button title="Next" onPress={handleScoreboard} />
+      <TouchableOpacity style={styles.button} onPress={handleScoreboard}>
+        <Text style={styles.buttonText}>Next</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -73,11 +75,32 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
+    backgroundColor: '#f8f1ff',
   },
   title: {
-    fontSize: 24,
+    fontSize: 36,
     fontWeight: 'bold',
+    color: '#9674B4',
     marginBottom: 20,
+  },
+  winner: {
+    fontSize: 20,
+    color: '#9674B4',
+    marginBottom: 20,
+  },
+  button: {
+    backgroundColor: '#9674B4',
+    padding: 15,
+    borderRadius: 25,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '60%',
+    marginVertical: 10,
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });
 

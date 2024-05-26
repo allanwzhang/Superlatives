@@ -1,18 +1,19 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 
 function HomeScreen({ navigation }) {
   const [name, setName] = useState('');
 
   const handleStartGame = () => {
-    // TODO: Implement joining lobby logic
     navigation.navigate('Start');
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Superlatives</Text>
-      <Button title="Start Game!" onPress={handleStartGame} />
+      <TouchableOpacity style={styles.button} onPress={handleStartGame}>
+        <Text style={styles.buttonText}>Start Game!</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -23,19 +24,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
+    backgroundColor: '#f8f1ff',
   },
   title: {
-    fontSize: 24,
+    fontSize: 36,
     fontWeight: 'bold',
+    color: '#9674B4',
     marginBottom: 20,
   },
-  input: {
-    width: '100%',
-    height: 40,
-    borderWidth: 1,
-    borderColor: 'gray',
-    marginBottom: 20,
-    paddingHorizontal: 10,
+  button: {
+    backgroundColor: '#9674B4',
+    padding: 15,
+    borderRadius: 25,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '60%',
+    marginVertical: 10,
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 
 function WinnerScreen({ navigation }) {
   const [name, setName] = useState('Rob');
@@ -7,16 +7,20 @@ function WinnerScreen({ navigation }) {
   const handleRestart = () => {
     navigation.navigate('Lobby');
   };
-  
+
   const handleVideo = () => {
     navigation.navigate('Video');
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Winner: {name}</Text>
-      <Button title="Watch video" onPress={handleVideo} />
-      <Button title="Play again" onPress={handleRestart} />
+      <Text style={styles.title}>Winner: {name}!</Text>
+      <TouchableOpacity style={styles.button} onPress={handleVideo}>
+        <Text style={styles.buttonText}>Watch video</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.button} onPress={handleRestart}>
+        <Text style={styles.buttonText}>Play again</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -27,26 +31,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
+    backgroundColor: '#f8f1ff',
   },
   title: {
-    fontSize: 24,
+    fontSize: 36,
     fontWeight: 'bold',
+    color: '#9674B4',
     marginBottom: 20,
   },
-  inputRow: {
-    flexDirection: 'row',
+  button: {
+    backgroundColor: '#9674B4',
+    padding: 15,
+    borderRadius: 25,
     alignItems: 'center',
-    marginBottom: 20,
+    justifyContent: 'center',
+    width: '60%',
+    marginVertical: 10,
   },
-  label: {
-    marginRight: 10,
-  },
-  input: {
-    flex: 1,
-    height: 40,
-    borderWidth: 1,
-    borderColor: 'gray',
-    paddingHorizontal: 10,
+  buttonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });
 

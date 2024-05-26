@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, Button } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 
 function ScoreboardScreen({ navigation }) {
   // Dummy data for the scoreboard
@@ -11,7 +11,7 @@ function ScoreboardScreen({ navigation }) {
     { name: 'Eve', points: 40 },
   ];
 
-  //TODO: Rounds such that if round < 5 (can change this) then we go to another question otherwise go to the end screen
+  // TODO: Rounds such that if round < 5 (can change this) then we go to another question otherwise go to the end screen
   const [round, setRound] = useState(5);
 
   const renderItem = ({ item }) => (
@@ -22,8 +22,8 @@ function ScoreboardScreen({ navigation }) {
   );
 
   const handleNext = () => {
-    if(round >= 5) navigation.navigate("Winner");
-    else navigation.navigate("Question");
+    if (round >= 5) navigation.navigate('Winner');
+    else navigation.navigate('Question');
   };
 
   return (
@@ -33,10 +33,11 @@ function ScoreboardScreen({ navigation }) {
         data={data}
         renderItem={renderItem}
         keyExtractor={(item) => item.name}
+        style={styles.list}
       />
-      <View style={styles.buttonContainer}>
-        <Button title={round >= 5 ? "See results" : "Next Question"} onPress={handleNext} />
-      </View>
+      <TouchableOpacity style={styles.button} onPress={handleNext}>
+        <Text style={styles.buttonText}>{round >= 5 ? 'See results' : 'Next Question'}</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -47,31 +48,52 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
+    backgroundColor: '#f8f1ff',
   },
   title: {
     marginTop: 50,
-    fontSize: 24,
+    fontSize: 36,
     fontWeight: 'bold',
+    color: '#9674B4',
     marginBottom: 20,
+  },
+  list: {
+    width: '100%',
   },
   item: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     padding: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
+    borderBottomColor: '#a3a5c3',
     width: '100%',
   },
   name: {
     fontSize: 18,
+    color: '#9674B4',
   },
   points: {
     fontSize: 18,
     fontWeight: 'bold',
+    color: '#9674B4',
+  },
+  button: {
+    backgroundColor: '#9674B4',
+    padding: 15,
+    borderRadius: 25,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '60%',
+    marginVertical: 20,
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
   buttonContainer: {
-    padding: 100
-  }
+    padding: 20,
+  },
 });
 
 export default ScoreboardScreen;

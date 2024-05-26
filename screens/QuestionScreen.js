@@ -1,11 +1,20 @@
-import React, { useState } from 'react';
-import { View, Text, Button, StyleSheet, TouchableOpacity } from 'react-native';
-
-const colors = ['Red', 'Blue', 'Green', 'Yellow'];
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 
 function QuestionScreen({ navigation }) {
   const [selectedAnswer, setSelectedAnswer] = useState(null);
-  const [colors, setColors] = useState(['Red', 'Blue', 'Green', 'Yellow']);
+  const [players, setPlayers] = useState([]);
+  
+  useEffect(() => {
+    setPlayers([
+      { id: '1', name: 'Allan' },
+      { id: '2', name: 'Sean' },
+      { id: '3', name: 'Rashingkar' },
+      { id: '4', name: 'Perla' },
+      { id: '5', name: 'Isabella' },
+      { id: '6', name: 'Libby' },
+    ]);
+  }, []);
 
   const handleSubmitAnswer = () => {
     // TODO: Implement submitting answer logic
@@ -20,25 +29,27 @@ function QuestionScreen({ navigation }) {
     <View style={styles.container}>
       <Text style={styles.title}>Question</Text>
       <Text style={styles.question}>What is your favorite color?</Text>
-      <View style={styles.optionsContainer}>
-        {colors.map((color, index) => (
+      <View style={styles.grid}>
+        {players.map((player, index) => (
           <TouchableOpacity
             key={index}
             style={[
-              styles.optionButton,
-              selectedAnswer === color && styles.selectedOptionButton,
+              styles.gridItem,
+              selectedAnswer === player.name && styles.selectedGridItem,
             ]}
-            onPress={() => handleSelectAnswer(color)}
+            onPress={() => handleSelectAnswer(player.name)}
           >
-            <Text style={styles.optionText}>{color}</Text>
+            <Text style={styles.gridItemText}>{player.name}</Text>
           </TouchableOpacity>
         ))}
       </View>
-      <Button
-        title="Submit Answer"
+      <TouchableOpacity
+        style={[styles.submitButton, !selectedAnswer && styles.disabledButton]}
         onPress={handleSubmitAnswer}
         disabled={!selectedAnswer}
-      />
+      >
+        <Text style={styles.submitButtonText}>Submit Answer</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -49,33 +60,59 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
+    backgroundColor: '#f8f1ff',
   },
   title: {
-    fontSize: 24,
+    fontSize: 36,
     fontWeight: 'bold',
+    color: '#9674B4',
     marginBottom: 20,
   },
   question: {
-    fontSize: 18,
+    fontSize: 20,
+    color: '#9674B4',
     marginBottom: 20,
     textAlign: 'center',
   },
-  optionsContainer: {
+  grid: {
     width: '100%',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
     marginBottom: 20,
   },
-  optionButton: {
-    backgroundColor: '#DDDDDD',
-    padding: 15,
-    marginVertical: 10,
-    borderRadius: 5,
+  gridItem: {
+    width: '40%',
+    margin: 5,
+    padding: 10,
     alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#D5C3E5',
+    borderRadius: 5,
   },
-  selectedOptionButton: {
-    backgroundColor: '#AAAAAA',
+  selectedGridItem: {
+    backgroundColor: '#9674B4', // Highlighted color for the selected item
   },
-  optionText: {
-    fontSize: 16,
+  gridItemText: {
+    fontSize: 18,
+    color: 'white',
+  },
+  submitButton: {
+    backgroundColor: '#9674B4',
+    padding: 15,
+    borderRadius: 25,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '60%',
+    marginVertical: 10,
+  },
+  submitButtonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  disabledButton: {
+    backgroundColor: '#a3a5c3',
   },
 });
 
