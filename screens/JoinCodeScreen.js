@@ -2,16 +2,26 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { initializeApp } from 'firebase/app';
 import { getDatabase, ref, onValue, update } from 'firebase/database';
+import { 
+  FIREBASE_API_KEY,
+  FIREBASE_AUTH_DOMAIN,
+  FIREBASE_DATABASE_URL,
+  FIREBASE_PROJECT_ID,
+  FIREBASE_STORAGE_BUCKET,
+  FIREBASE_MESSAGING_SENDER_ID,
+  FIREBASE_APP_ID,
+  FIREBASE_MEASUREMENT_ID 
+} from '@env';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDOxMljI2YHgteDlHwjBjrgzr5hmISOpbg",
-  authDomain: "superlatives-cd8c1.firebaseapp.com",
-  databaseURL: "https://superlatives-cd8c1-default-rtdb.firebaseio.com",
-  projectId: "superlatives-cd8c1",
-  storageBucket: "superlatives-cd8c1.appspot.com",
-  messagingSenderId: "1018084849010",
-  appId: "1:1018084849010:web:c1d5358d3fa45ed80999eb",
-  measurementId: "G-N117DFW7JW"
+  apiKey: FIREBASE_API_KEY,
+  authDomain: FIREBASE_AUTH_DOMAIN,
+  databaseURL: FIREBASE_DATABASE_URL,
+  projectId: FIREBASE_PROJECT_ID,
+  storageBucket: FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: FIREBASE_MESSAGING_SENDER_ID,
+  appId: FIREBASE_APP_ID,
+  measurementId: FIREBASE_MEASUREMENT_ID
 };
 
 function JoinCodeScreen({ navigation, route }) {
