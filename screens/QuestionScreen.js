@@ -73,7 +73,31 @@ function QuestionScreen({ navigation, route }) {
           const totalAnswers = answers ? Object.keys(answers).length : 0;
 
           if (totalAnswers === totalPlayers && totalPlayers > 0) {
-            update(gameRef, { status: 'showResults' });
+            // Calculate scores
+            const newScores = {};
+            Object.values(answers).forEach((playerAnswers) => {
+              Object.values(playerAnswers).forEach((answer) => {
+                if (!newScores[answer]) {
+                  newScores[answer] = 0;
+                }
+                newScores[answer] += 1; // Adjust scoring logic as needed
+              });
+            });
+
+            // Update scores in the database
+            const scoresRef = child(gameRef, 'scores');
+            onValue(scoresRef, (scoresSnapshot) => {
+              const scores = scoresSnapshot.val() || {};
+              Object.keys(newScores).forEach((player) => {
+                if (scores[player]) {
+                  scores[player].points += newScores[player];
+                } else {
+                  scores[player] = { name: player, points: newScores[player] };
+                }
+              });
+
+              update(gameRef, { scores, status: 'showResults' });
+            }, { onlyOnce: true });
           }
         }, { onlyOnce: true });
       }, { onlyOnce: true });

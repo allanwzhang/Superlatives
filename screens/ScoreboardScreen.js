@@ -123,9 +123,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
-  buttonContainer: {
-    padding: 20,
-  },
 });
 
 export default ScoreboardScreen;
