@@ -1,9 +1,24 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { initializeApp } from 'firebase/app';
+import { getDatabase, ref, onValue, update } from 'firebase/database';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDOxMljI2YHgteDlHwjBjrgzr5hmISOpbg",
+  authDomain: "superlatives-cd8c1.firebaseapp.com",
+  databaseURL: "https://superlatives-cd8c1-default-rtdb.firebaseio.com",
+  projectId: "superlatives-cd8c1",
+  storageBucket: "superlatives-cd8c1.appspot.com",
+  messagingSenderId: "1018084849010",
+  appId: "1:1018084849010:web:c1d5358d3fa45ed80999eb",
+  measurementId: "G-N117DFW7JW"
+};
 
 function JoinCodeScreen({ navigation, route }) {
   const [code, setCode] = useState('');
   const [name, setName] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (route.params && route.params.name) {
@@ -12,10 +27,36 @@ function JoinCodeScreen({ navigation, route }) {
   }, [route.params]);
 
   const handleJoinLobby = () => {
-    // TODO: Implement joining lobby logic
-    if (code !== "") {
-      navigation.navigate('Lobby', { name: name, code: code });
-    }
+    setIsLoading(true);
+    setError(null);
+
+    // Initialize Firebase app
+    const app = initializeApp(firebaseConfig);
+
+    // Get the database instance
+    const db = getDatabase(app);
+
+    const gameRef = ref(db, `games/${code}`);
+    onValue(gameRef, (snapshot) => {
+      if (snapshot.exists()) {
+        // Game exists, add player to the players list
+        const playersRef = ref(db, `games/${code}/players`);
+        update(playersRef, {
+          [name]: { name: name }
+        }).then(() => {
+          setIsLoading(false);
+          // Navigate to the lobby screen
+          navigation.navigate('Lobby', { name: name, code: code });
+        }).catch((error) => {
+          setIsLoading(false);
+          setError('Error joining the game: ' + error.message);
+        });
+      } else {
+        // Game does not exist, show an error message
+        setIsLoading(false);
+        setError('Invalid game code');
+      }
+    }, { onlyOnce: true });
   };
 
   return (
@@ -31,8 +72,13 @@ function JoinCodeScreen({ navigation, route }) {
           onChangeText={setCode}
         />
       </View>
-      <TouchableOpacity style={styles.button} onPress={handleJoinLobby}>
-        <Text style={styles.buttonText}>Enter Game</Text>
+      {error && <Text style={styles.error}>{error}</Text>}
+      <TouchableOpacity style={styles.button} onPress={handleJoinLobby} disabled={isLoading}>
+        {isLoading ? (
+          <ActivityIndicator size="small" color="#ffffff" />
+        ) : (
+          <Text style={styles.buttonText}>Enter Game</Text>
+        )}
       </TouchableOpacity>
     </View>
   );
@@ -86,6 +132,10 @@ const styles = StyleSheet.create({
   buttonText: {
     color: 'white',
     fontSize: 16,
+  },
+  error: {
+    color: 'red',
+    marginBottom: 10,
   },
 });
 

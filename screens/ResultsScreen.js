@@ -1,70 +1,122 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions, ActivityIndicator } from 'react-native';
 import { PieChart } from 'react-native-chart-kit';
+import { getDatabase, ref, onValue, child } from 'firebase/database';
 
-function ResultsScreen({ navigation }) {
-  // Dummy data for the pie chart
-  const data = [
-    {
-      name: 'Red',
-      population: 45,
-      color: 'red',
-      legendFontColor: '#7F7F7F',
-      legendFontSize: 15,
-    },
-    {
-      name: 'Blue',
-      population: 30,
-      color: 'blue',
-      legendFontColor: '#7F7F7F',
-      legendFontSize: 15,
-    },
-    {
-      name: 'Green',
-      population: 20,
-      color: 'green',
-      legendFontColor: '#7F7F7F',
-      legendFontSize: 15,
-    },
-    {
-      name: 'Yellow',
-      population: 5,
-      color: 'yellow',
-      legendFontColor: '#7F7F7F',
-      legendFontSize: 15,
-    },
-  ];
+function ResultsScreen({ navigation, route }) {
+  const [data, setData] = useState([]);
+  const [winner, setWinner] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const { code } = route.params;
+
+  useEffect(() => {
+    const db = getDatabase();
+    const gameRef = ref(db, `games/${code}`);
+
+    const playersRef = child(gameRef, 'players');
+    const answersRef = child(gameRef, 'answers');
+
+    const playersListener = onValue(playersRef, (playersSnapshot) => {
+      const players = playersSnapshot.val();
+      const totalPlayers = players ? Object.keys(players).length : 0;
+
+      const answersListener = onValue(answersRef, (answersSnapshot) => {
+        const answers = answersSnapshot.val();
+        const totalAnswers = answers ? Object.keys(answers).length : 0;
+
+        if (totalAnswers === totalPlayers && totalPlayers > 0) {
+          const answerCounts = {};
+
+          // Count the answers
+          Object.values(answers).forEach((playerAnswers) => {
+            Object.values(playerAnswers).forEach((answer) => {
+              if (answerCounts[answer]) {
+                answerCounts[answer]++;
+              } else {
+                answerCounts[answer] = 1;
+              }
+            });
+          });
+
+          // Convert answer counts to pie chart data format
+          const chartData = Object.entries(answerCounts).map(([answer, count]) => ({
+            name: answer,
+            population: count,
+            color: getRandomColor(),
+            legendFontColor: '#7F7F7F',
+            legendFontSize: 15,
+          }));
+
+          setData(chartData);
+          setIsLoading(false);
+        }
+      });
+
+      return () => {
+        // Clean up answers listener when players change
+        answersListener();
+      };
+    });
+
+    // Fetch the winner
+    const winnerRef = child(gameRef, 'winner');
+    const winnerListener = onValue(winnerRef, (snapshot) => {
+      const fetchedWinner = snapshot.val();
+      setWinner(fetchedWinner);
+    });
+
+    // Clean up listeners
+    return () => {
+      playersListener();
+      winnerListener();
+    };
+  }, [code]);
+
+  const getRandomColor = () => {
+    const letters = '0123456789ABCDEF';
+    let color = '#';
+    for (let i = 0; i < 6; i++) {
+      color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
+  };
 
   const handleScoreboard = () => {
-    navigation.navigate('Scoreboard');
+    navigation.navigate('Scoreboard', { code });
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Results</Text>
-      <Text style={styles.winner}>Winner: Rob!</Text>
-      <PieChart
-        data={data}
-        width={Dimensions.get('window').width - 40}
-        height={220}
-        chartConfig={{
-          backgroundColor: '#1cc910',
-          backgroundGradientFrom: '#eff3ff',
-          backgroundGradientTo: '#efefef',
-          decimalPlaces: 2,
-          color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-          style: {
-            borderRadius: 16,
-          },
-        }}
-        accessor="population"
-        backgroundColor="transparent"
-        paddingLeft="15"
-        absolute
-      />
-      <TouchableOpacity style={styles.button} onPress={handleScoreboard}>
-        <Text style={styles.buttonText}>Next</Text>
-      </TouchableOpacity>
+      {isLoading ? (
+        <ActivityIndicator size="large" color="#9674B4" />
+      ) : (
+        <>
+          <Text style={styles.winner}>Winner: {winner}!</Text>
+          <PieChart
+            data={data}
+            width={Dimensions.get('window').width - 40}
+            height={220}
+            chartConfig={{
+              backgroundColor: '#1cc910',
+              backgroundGradientFrom: '#eff3ff',
+              backgroundGradientTo: '#efefef',
+              decimalPlaces: 2,
+              color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+              style: {
+                borderRadius: 16,
+              },
+            }}
+            accessor="population"
+            backgroundColor="transparent"
+            paddingLeft="15"
+            absolute
+          />
+          <TouchableOpacity style={styles.button} onPress={handleScoreboard}>
+            <Text style={styles.buttonText}>Next</Text>
+          </TouchableOpacity>
+        </>
+      )}
     </View>
   );
 }

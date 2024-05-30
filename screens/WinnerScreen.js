@@ -1,20 +1,50 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { getDatabase, ref, onValue, update, child } from 'firebase/database';
 
-function WinnerScreen({ navigation }) {
-  const [name, setName] = useState('Rob');
+function WinnerScreen({ navigation, route }) {
+  const [winner, setWinner] = useState('');
+  const { code } = route.params;
+
+  useEffect(() => {
+    const db = getDatabase();
+    const gameRef = ref(db, `games/${code}`);
+
+    // Fetch the winner
+    const winnerRef = child(gameRef, 'winner');
+    onValue(winnerRef, (snapshot) => {
+      const fetchedWinner = snapshot.val();
+      setWinner(fetchedWinner);
+    });
+
+    // Clean up listener
+    return () => {
+      onValue(winnerRef, null);
+    };
+  }, [code]);
 
   const handleRestart = () => {
-    navigation.navigate('Lobby');
+    const db = getDatabase();
+    const gameRef = ref(db, `games/${code}`);
+
+    // Reset the game data in the Firebase Realtime Database
+    update(gameRef, {
+      currentRound: 1,
+      currentQuestion: 'What is your favorite color?',
+      answers: {},
+      winner: '',
+    });
+
+    navigation.navigate('Lobby', { code });
   };
 
   const handleVideo = () => {
-    navigation.navigate('Video');
+    navigation.navigate('Video', { code });
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Winner: {name}!</Text>
+      <Text style={styles.title}>Winner: {winner}!</Text>
       <TouchableOpacity style={styles.button} onPress={handleVideo}>
         <Text style={styles.buttonText}>Watch video</Text>
       </TouchableOpacity>

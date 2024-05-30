@@ -7,7 +7,7 @@ import JoinCodeScreen from '../screens/JoinCodeScreen';
 import StartScreen from '../screens/StartScreen';
 import QuestionScreen from '../screens/QuestionScreen';
 import ResultsScreen from '../screens/ResultsScreen';
-import ScoreboardScreen from '../screens/Scoreboard';
+import ScoreboardScreen from '../screens/ScoreboardScreen';
 import WinnerScreen from '../screens/WinnerScreen';
 import VideoScreen from '../screens/VideoScreen';
 

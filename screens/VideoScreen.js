@@ -1,10 +1,23 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { getDatabase, ref, update } from 'firebase/database';
 
-function VideoScreen({ navigation }) {
+function VideoScreen({ navigation, route }) {
+  const { code } = route.params;
 
   const handleRestart = () => {
-    navigation.navigate('Lobby');
+    const db = getDatabase();
+    const gameRef = ref(db, `games/${code}`);
+
+    // Reset the game data in the Firebase Realtime Database
+    update(gameRef, {
+      currentRound: 1,
+      currentQuestion: 'What is your favorite color?',
+      answers: {},
+      winner: '',
+    });
+
+    navigation.navigate('Lobby', { code });
   };
 
   return (

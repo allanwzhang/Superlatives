@@ -1,15 +1,58 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { initializeApp } from 'firebase/app';
+import { getDatabase, ref, push, set } from 'firebase/database';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDOxMljI2YHgteDlHwjBjrgzr5hmISOpbg",
+  authDomain: "superlatives-cd8c1.firebaseapp.com",
+  databaseURL: "https://superlatives-cd8c1-default-rtdb.firebaseio.com",
+  projectId: "superlatives-cd8c1",
+  storageBucket: "superlatives-cd8c1.appspot.com",
+  messagingSenderId: "1018084849010",
+  appId: "1:1018084849010:web:c1d5358d3fa45ed80999eb",
+  measurementId: "G-N117DFW7JW"
+};
 
 function StartScreen({ navigation }) {
   const [name, setName] = useState('');
- //TODO: Add way to upload photo
+
   const handleCreateGame = () => {
-    if (name !== "") navigation.navigate('Lobby', { name: name });
+    if (name !== '') {
+      const gameData = {
+        players: { [name]: { name } },
+        scores: { [name]: { name, points: 0 } },
+        currentRound: 1,
+        currentQuestion: 'What is your favorite color?',
+        answers: {},
+        winner: '',
+        creator: name,
+        status: 'waiting',
+      };
+
+      // Initialize Firebase app
+      const app = initializeApp(firebaseConfig);
+
+      // Get the database instance
+      const db = getDatabase(app);
+
+      // Create a new game in the Firebase Realtime Database with a 6-digit code
+      const gameCode = Math.floor(100000 + Math.random() * 900000).toString();
+      const gamesRef = ref(db, `games/${gameCode}`);
+      set(gamesRef, gameData)
+        .then(() => {
+          navigation.navigate('Lobby', { name, code: gameCode });
+        })
+        .catch((error) => {
+          console.error('Error creating game: ', error);
+        });
+    }
   };
 
   const handleJoinLobby = () => {
-    if (name !== "") navigation.navigate('JoinCode', { name: name });
+    if (name !== '') {
+      navigation.navigate('JoinCode', { name });
+    }
   };
 
   return (

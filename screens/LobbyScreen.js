@@ -1,70 +1,111 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { initializeApp } from 'firebase/app';
+import { getDatabase, ref, onValue, update, push } from 'firebase/database';
 
+const firebaseConfig = {
+    apiKey: "AIzaSyDOxMljI2YHgteDlHwjBjrgzr5hmISOpbg",
+    authDomain: "superlatives-cd8c1.firebaseapp.com",
+    databaseURL: "https://superlatives-cd8c1-default-rtdb.firebaseio.com",
+    projectId: "superlatives-cd8c1",
+    storageBucket: "superlatives-cd8c1.appspot.com",
+    messagingSenderId: "1018084849010",
+    appId: "1:1018084849010:web:c1d5358d3fa45ed80999eb",
+    measurementId: "G-N117DFW7JW"
+  };
+ 
 function LobbyScreen({ navigation, route }) {
-  const [code, setCode] = useState(0);
-  const [name, setName] = useState("");
-  const [players, setPlayers] = useState([]);
+const [code, setCode] = useState(0);
+const [name, setName] = useState("");
+const [players, setPlayers] = useState([]);
+const [creator, setCreator] = useState('');
+const [status, setStatus] = useState('waiting');
 
-  useEffect(() => {
-    // TODO: code should be from database
-    // TODO: Make sure random code doesn't exist in db already
+useEffect(() => {
     if (route.params && route.params.name) {
-      setName(route.params.name);
-      if (route.params.code) {
+    setName(route.params.name);
+    if (route.params.code) {
         setCode(route.params.code);
-      } else {
-        setCode(Math.floor(100000 + Math.random() * 900000));
-      }
+
+        // Initialize Firebase app
+        const app = initializeApp(firebaseConfig);
+
+        // Get the database instance
+        const db = getDatabase(app);
+
+        // Reference to the game's data in the database
+        const gameRef = ref(db, `games/${route.params.code}`);
+
+        // Listen for changes in the game's data
+        onValue(gameRef, (snapshot) => {
+        const gameData = snapshot.val();
+        if (gameData) {
+            setPlayers(Object.values(gameData.players));
+            setCreator(gameData.creator);
+            setStatus(gameData.status);
+
+            // If the game has started, navigate to the Question screen
+            if (gameData.status === 'started') {
+            navigation.navigate('Question', { code: route.params.code });
+            }
+        }
+        });
     }
-  }, [route.params]);
+    }
+}, [route.params]);
 
-  useEffect(() => {
-    setPlayers([
-      { id: '1', name: name },
-      { id: '2', name: 'Sean' },
-      { id: '3', name: 'Rashingkar' },
-      { id: '4', name: 'Perla' },
-      { id: '5', name: 'Isabella' },
-      { id: '6', name: 'Libby' },
-    ]);
-  }, [name]);
+const handleStartGame = () => {
+    const db = getDatabase();
+    const gameRef = ref(db, `games/${code}`);
 
-  const handleStartGame = () => {
-    // TODO: Implement joining lobby logic
-    navigation.navigate('Question');
-  };
+    update(gameRef, {
+    status: 'started',
+    })
+    .then(() => {
+        navigation.navigate('Question', { code });
+    })
+    .catch((error) => {
+        console.log('Error starting the game:', error);
+    });
+};
 
-  const handleLeaveLobby = () => {
-    // TODO: Implement leaving lobby logic
-    navigation.navigate('Start');
-  };
+const handleLeaveLobby = () => {
+    const db = getDatabase();
+    const playerRef = ref(db, `games/${code}/players/${name}`);
 
-  return (
+    remove(playerRef)
+    .then(() => {
+        navigation.navigate('Start');
+    })
+    .catch((error) => {
+        console.log('Error leaving the lobby:', error);
+    });
+};
+
+return (
     <View style={styles.container}>
-      <Text style={styles.title}>Lobby</Text>
-      <Text style={styles.code}>Code: {code}</Text>
-      <View style={styles.grid}>
+    <Text style={styles.title}>Lobby</Text>
+    <Text style={styles.code}>Code: {code}</Text>
+    <View style={styles.grid}>
         {players.map((player, index) => (
-          <View 
-            key={player.id} 
-            style={[styles.gridItem, index === 0 && styles.firstGridItem]}
-          >
+        <View key={index} style={[styles.gridItem, index === 0 && styles.firstGridItem]}>
             <Text style={styles.playerName}>{player.name}</Text>
-          </View>
+        </View>
         ))}
-      </View>
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.button} onPress={handleLeaveLobby}>
-          <Text style={styles.buttonText}>Leave</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.button} onPress={handleStartGame}>
-          <Text style={styles.buttonText}>Start</Text>
-        </TouchableOpacity>
-      </View>
     </View>
-  );
-}
+    <View style={styles.buttonContainer}>
+        <TouchableOpacity style={styles.button} onPress={handleLeaveLobby}>
+        <Text style={styles.buttonText}>Leave</Text>
+        </TouchableOpacity>
+        {name === creator && (
+        <TouchableOpacity style={styles.button} onPress={handleStartGame}>
+            <Text style={styles.buttonText}>Start</Text>
+        </TouchableOpacity>
+        )}
+    </View>
+    </View>
+);
+}  
 
 const styles = StyleSheet.create({
   container: {

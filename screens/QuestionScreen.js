@@ -1,55 +1,116 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { getDatabase, ref, onValue, update, push, child } from 'firebase/database';
 
-function QuestionScreen({ navigation }) {
+function QuestionScreen({ navigation, route }) {
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [players, setPlayers] = useState([]);
-  
-  useEffect(() => {
-    setPlayers([
-      { id: '1', name: 'Allan' },
-      { id: '2', name: 'Sean' },
-      { id: '3', name: 'Rashingkar' },
-      { id: '4', name: 'Perla' },
-      { id: '5', name: 'Isabella' },
-      { id: '6', name: 'Libby' },
-    ]);
-  }, []);
+  const [question, setQuestion] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { code } = route.params;
 
-  const handleSubmitAnswer = () => {
-    // TODO: Implement submitting answer logic
-    navigation.navigate('Results', { answer: selectedAnswer });
-  };
+  useEffect(() => {
+    const db = getDatabase();
+    const gameRef = ref(db, `games/${code}`);
+
+    // Fetch players
+    const playersRef = child(gameRef, 'players');
+    onValue(playersRef, (snapshot) => {
+      const fetchedPlayers = [];
+      snapshot.forEach((childSnapshot) => {
+        const player = childSnapshot.val();
+        fetchedPlayers.push(player);
+      });
+      setPlayers(fetchedPlayers);
+    });
+
+    // Fetch current question
+    const questionRef = child(gameRef, 'currentQuestion');
+    onValue(questionRef, (snapshot) => {
+      const fetchedQuestion = snapshot.val();
+      setQuestion(fetchedQuestion);
+    });
+
+    // Listen for status changes
+    const statusRef = child(gameRef, 'status');
+    const statusListener = onValue(statusRef, (snapshot) => {
+      const status = snapshot.val();
+      if (status === 'showResults') {
+        navigation.navigate('Results', { code });
+      }
+    });
+
+    // Clean up listeners
+    return () => {
+      onValue(playersRef, null);
+      onValue(questionRef, null);
+      onValue(statusRef, null);
+    };
+  }, [code]);
 
   const handleSelectAnswer = (answer) => {
     setSelectedAnswer(answer);
   };
 
+  const handleSubmitAnswer = () => {
+    setIsSubmitting(true);
+    const db = getDatabase();
+    const gameRef = ref(db, `games/${code}`);
+
+    // Update the player's answer in the database
+    const answerRef = child(gameRef, `answers/${selectedAnswer}`);
+    push(answerRef, selectedAnswer).then(() => {
+      // Update the status to show results if all players have submitted answers
+      const playersRef = child(gameRef, 'players');
+      const answersRef = child(gameRef, 'answers');
+
+      onValue(playersRef, (playersSnapshot) => {
+        const players = playersSnapshot.val();
+        const totalPlayers = players ? Object.keys(players).length : 0;
+
+        onValue(answersRef, (answersSnapshot) => {
+          const answers = answersSnapshot.val();
+          const totalAnswers = answers ? Object.keys(answers).length : 0;
+
+          if (totalAnswers === totalPlayers && totalPlayers > 0) {
+            update(gameRef, { status: 'showResults' });
+          }
+        }, { onlyOnce: true });
+      }, { onlyOnce: true });
+    });
+  };
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Question</Text>
-      <Text style={styles.question}>What is your favorite color?</Text>
-      <View style={styles.grid}>
-        {players.map((player, index) => (
+      {isSubmitting ? (
+        <ActivityIndicator size="large" color="#9674B4" />
+      ) : (
+        <>
+          <Text style={styles.title}>Question</Text>
+          <Text style={styles.question}>{question}</Text>
+          <View style={styles.grid}>
+            {players.map((player, index) => (
+              <TouchableOpacity
+                key={index}
+                style={[
+                  styles.gridItem,
+                  selectedAnswer === player.name && styles.selectedGridItem,
+                ]}
+                onPress={() => handleSelectAnswer(player.name)}
+              >
+                <Text style={styles.gridItemText}>{player.name}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
           <TouchableOpacity
-            key={index}
-            style={[
-              styles.gridItem,
-              selectedAnswer === player.name && styles.selectedGridItem,
-            ]}
-            onPress={() => handleSelectAnswer(player.name)}
+            style={[styles.submitButton, !selectedAnswer && styles.disabledButton]}
+            onPress={handleSubmitAnswer}
+            disabled={!selectedAnswer}
           >
-            <Text style={styles.gridItemText}>{player.name}</Text>
+            <Text style={styles.submitButtonText}>Submit Answer</Text>
           </TouchableOpacity>
-        ))}
-      </View>
-      <TouchableOpacity
-        style={[styles.submitButton, !selectedAnswer && styles.disabledButton]}
-        onPress={handleSubmitAnswer}
-        disabled={!selectedAnswer}
-      >
-        <Text style={styles.submitButtonText}>Submit Answer</Text>
-      </TouchableOpacity>
+        </>
+      )}
     </View>
   );
 }
