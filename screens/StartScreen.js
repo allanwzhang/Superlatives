@@ -1,33 +1,28 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
-import { initializeApp } from 'firebase/app';
-import { getDatabase, ref, push, set } from 'firebase/database';
-import { 
-  FIREBASE_API_KEY,
-  FIREBASE_AUTH_DOMAIN,
-  FIREBASE_DATABASE_URL,
-  FIREBASE_PROJECT_ID,
-  FIREBASE_STORAGE_BUCKET,
-  FIREBASE_MESSAGING_SENDER_ID,
-  FIREBASE_APP_ID,
-  FIREBASE_MEASUREMENT_ID 
-} from '@env';
-
-const firebaseConfig = {
-  apiKey: FIREBASE_API_KEY,
-  authDomain: FIREBASE_AUTH_DOMAIN,
-  databaseURL: FIREBASE_DATABASE_URL,
-  projectId: FIREBASE_PROJECT_ID,
-  storageBucket: FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: FIREBASE_MESSAGING_SENDER_ID,
-  appId: FIREBASE_APP_ID,
-  measurementId: FIREBASE_MEASUREMENT_ID
-};
+import { getDatabase, ref, push, set, get } from 'firebase/database';
 
 function StartScreen({ navigation }) {
   const [name, setName] = useState('');
 
-  const handleCreateGame = () => {
+  const generateUniqueGameCode = async (db) => {
+    const generateCode = () => Math.floor(100000 + Math.random() * 900000).toString();
+  
+    const checkCodeExists = async (code) => {
+      const gamesRef = ref(db, `games/${code}`);
+      const snapshot = await get(gamesRef);
+      return snapshot.exists();
+    };
+  
+    let gameCode = generateCode();
+    while (await checkCodeExists(gameCode)) {
+      gameCode = generateCode();
+    }
+  
+    return gameCode;
+  };
+
+  const handleCreateGame = async () => {
     if (name !== '') {
       const gameData = {
         players: { [name]: { name } },
@@ -39,15 +34,11 @@ function StartScreen({ navigation }) {
         creator: name,
         status: 'waiting',
       };
-
-      // Initialize Firebase app
-      const app = initializeApp(firebaseConfig);
-
-      // Get the database instance
-      const db = getDatabase(app);
+      
+      const db = getDatabase();
 
       // Create a new game in the Firebase Realtime Database with a 6-digit code
-      const gameCode = Math.floor(100000 + Math.random() * 900000).toString();
+      const gameCode = await generateUniqueGameCode(db);
       const gamesRef = ref(db, `games/${gameCode}`);
       set(gamesRef, gameData)
         .then(() => {

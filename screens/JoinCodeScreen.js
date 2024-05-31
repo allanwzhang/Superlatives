@@ -2,27 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { initializeApp } from 'firebase/app';
 import { getDatabase, ref, onValue, update } from 'firebase/database';
-import { 
-  FIREBASE_API_KEY,
-  FIREBASE_AUTH_DOMAIN,
-  FIREBASE_DATABASE_URL,
-  FIREBASE_PROJECT_ID,
-  FIREBASE_STORAGE_BUCKET,
-  FIREBASE_MESSAGING_SENDER_ID,
-  FIREBASE_APP_ID,
-  FIREBASE_MEASUREMENT_ID 
-} from '@env';
-
-const firebaseConfig = {
-  apiKey: FIREBASE_API_KEY,
-  authDomain: FIREBASE_AUTH_DOMAIN,
-  databaseURL: FIREBASE_DATABASE_URL,
-  projectId: FIREBASE_PROJECT_ID,
-  storageBucket: FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: FIREBASE_MESSAGING_SENDER_ID,
-  appId: FIREBASE_APP_ID,
-  measurementId: FIREBASE_MEASUREMENT_ID
-};
 
 function JoinCodeScreen({ navigation, route }) {
   const [code, setCode] = useState('');
@@ -40,11 +19,7 @@ function JoinCodeScreen({ navigation, route }) {
     setIsLoading(true);
     setError(null);
 
-    // Initialize Firebase app
-    const app = initializeApp(firebaseConfig);
-
-    // Get the database instance
-    const db = getDatabase(app);
+    const db = getDatabase();
 
     const gameRef = ref(db, `games/${code}`);
     onValue(gameRef, (snapshot) => {
