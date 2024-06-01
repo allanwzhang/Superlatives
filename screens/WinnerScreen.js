@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { getDatabase, ref, onValue, update, child } from 'firebase/database';
+import React, { useState, useEffect } from "react";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { getDatabase, ref, onValue, update, child } from "firebase/database";
 
 function WinnerScreen({ navigation, route }) {
-  const [winner, setWinner] = useState('');
+  const [winner, setWinner] = useState("");
   const { code } = route.params;
 
   useEffect(() => {
@@ -11,7 +11,7 @@ function WinnerScreen({ navigation, route }) {
     const gameRef = ref(db, `games/${code}`);
 
     // Fetch the winner
-    const winnerRef = child(gameRef, 'winner');
+    const winnerRef = child(gameRef, "winner");
     onValue(winnerRef, (snapshot) => {
       const fetchedWinner = snapshot.val();
       setWinner(fetchedWinner);
@@ -30,16 +30,16 @@ function WinnerScreen({ navigation, route }) {
     // Reset the game data in the Firebase Realtime Database
     update(gameRef, {
       currentRound: 1,
-      currentQuestion: 'What is your favorite color?',
+      currentQuestion: "What is your favorite color?",
       answers: {},
-      winner: '',
+      winner: "",
     });
 
-    navigation.navigate('Lobby', { code });
+    navigation.navigate("Lobby", { code });
   };
 
   const handleVideo = () => {
-    navigation.navigate('Video', { code });
+    navigation.navigate("Video", { code });
   };
 
   return (
@@ -58,30 +58,30 @@ function WinnerScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     padding: 20,
-    backgroundColor: '#f8f1ff',
+    backgroundColor: "#f8f1ff",
   },
   title: {
     fontSize: 36,
-    fontWeight: 'bold',
-    color: '#9674B4',
+    fontWeight: "bold",
+    color: "#9674B4",
     marginBottom: 20,
   },
   button: {
-    backgroundColor: '#9674B4',
+    backgroundColor: "#9674B4",
     padding: 15,
     borderRadius: 25,
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '60%',
+    alignItems: "center",
+    justifyContent: "center",
+    width: "60%",
     marginVertical: 10,
   },
   buttonText: {
-    color: 'white',
+    color: "white",
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 });
 

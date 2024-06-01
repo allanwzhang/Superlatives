@@ -1,6 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
-import { getDatabase, ref, onValue, update, child } from 'firebase/database';
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+} from "react-native";
+import { getDatabase, ref, onValue, update, child } from "firebase/database";
 
 function ScoreboardScreen({ navigation, route }) {
   const [scores, setScores] = useState([]);
@@ -12,7 +18,7 @@ function ScoreboardScreen({ navigation, route }) {
     const gameRef = ref(db, `games/${code}`);
 
     // Fetch scores
-    const scoresRef = child(gameRef, 'scores');
+    const scoresRef = child(gameRef, "scores");
     onValue(scoresRef, (snapshot) => {
       const fetchedScores = [];
       snapshot.forEach((childSnapshot) => {
@@ -23,7 +29,7 @@ function ScoreboardScreen({ navigation, route }) {
     });
 
     // Fetch current round
-    const roundRef = child(gameRef, 'currentRound');
+    const roundRef = child(gameRef, "currentRound");
     onValue(roundRef, (snapshot) => {
       const fetchedRound = snapshot.val();
       setRound(fetchedRound);
@@ -48,13 +54,13 @@ function ScoreboardScreen({ navigation, route }) {
     const gameRef = ref(db, `games/${code}`);
 
     if (round >= 5) {
-      navigation.navigate('Winner', { code });
+      navigation.navigate("Winner", { code });
     } else {
       // Increment the current round in the database
       update(gameRef, {
         currentRound: round + 1,
       });
-      navigation.navigate('Question', { code });
+      navigation.navigate("Question", { code });
     }
   };
 
@@ -68,7 +74,9 @@ function ScoreboardScreen({ navigation, route }) {
         style={styles.list}
       />
       <TouchableOpacity style={styles.button} onPress={handleNext}>
-        <Text style={styles.buttonText}>{round >= 5 ? 'See results' : 'Next Question'}</Text>
+        <Text style={styles.buttonText}>
+          {round >= 5 ? "See results" : "Next Question"}
+        </Text>
       </TouchableOpacity>
     </View>
   );
@@ -77,51 +85,51 @@ function ScoreboardScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     padding: 20,
-    backgroundColor: '#f8f1ff',
+    backgroundColor: "#f8f1ff",
   },
   title: {
     marginTop: 50,
     fontSize: 36,
-    fontWeight: 'bold',
-    color: '#9674B4',
+    fontWeight: "bold",
+    color: "#9674B4",
     marginBottom: 20,
   },
   list: {
-    width: '100%',
+    width: "100%",
   },
   item: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     padding: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#a3a5c3',
-    width: '100%',
+    borderBottomColor: "#a3a5c3",
+    width: "100%",
   },
   name: {
     fontSize: 18,
-    color: '#9674B4',
+    color: "#9674B4",
   },
   points: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#9674B4',
+    fontWeight: "bold",
+    color: "#9674B4",
   },
   button: {
-    backgroundColor: '#9674B4',
+    backgroundColor: "#9674B4",
     padding: 15,
     borderRadius: 25,
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '60%',
+    alignItems: "center",
+    justifyContent: "center",
+    width: "60%",
     marginVertical: 20,
   },
   buttonText: {
-    color: 'white',
+    color: "white",
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 });
 

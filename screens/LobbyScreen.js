@@ -1,161 +1,192 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { initializeApp } from 'firebase/app';
-import { getDatabase, ref, onValue, update, push, remove } from 'firebase/database';
- 
-function LobbyScreen({ navigation, route }) {
-const [code, setCode] = useState(0);
-const [name, setName] = useState("");
-const [players, setPlayers] = useState([]);
-const [creator, setCreator] = useState('');
-const [status, setStatus] = useState('waiting');
+import React, { useState, useEffect } from "react";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { initializeApp } from "firebase/app";
+import {
+  getDatabase,
+  ref,
+  onValue,
+  update,
+  push,
+  remove,
+} from "firebase/database";
 
-useEffect(() => {
+function LobbyScreen({ navigation, route }) {
+  const [code, setCode] = useState(0);
+  const [name, setName] = useState("");
+  const [players, setPlayers] = useState([]);
+  const [creator, setCreator] = useState("");
+  const [status, setStatus] = useState("waiting");
+
+  useEffect(() => {
+    let gameRef;
+    let gameListener;
+
     if (route.params && route.params.name) {
-    setName(route.params.name);
-    if (route.params.code) {
+      setName(route.params.name);
+      if (route.params.code) {
         setCode(route.params.code);
 
         const db = getDatabase();
 
         // Reference to the game's data in the database
-        const gameRef = ref(db, `games/${route.params.code}`);
+        gameRef = ref(db, `games/${route.params.code}`);
 
         // Listen for changes in the game's data
-        onValue(gameRef, (snapshot) => {
-        const gameData = snapshot.val();
-        if (gameData) {
-            setPlayers(Object.values(gameData.players));
-            setCreator(gameData.creator);
-            setStatus(gameData.status);
+        gameListener = onValue(gameRef, (snapshot) => {
+          const gameData = snapshot.val();
+          if (gameData) {
+            if (
+              gameData.players &&
+              Object.keys(gameData.players).length !== 0
+            ) {
+              setPlayers(Object.values(gameData.players));
+              setCreator(Object.values(gameData.players)[0].name);
+              setStatus(gameData.status);
 
-            // If the game has started, navigate to the Question screen
-            if (gameData.status === 'started') {
-            navigation.navigate('Question', { code: route.params.code });
+              // If the game has started, navigate to the Question screen
+              if (gameData.status === "started") {
+                navigation.navigate("Question", { code: route.params.code });
+              }
+            } else {
+              console.log("no players");
             }
-        }
+          }
         });
+      }
     }
-    }
-}, [route.params]);
+    return () => {
+      if (gameRef && gameListener) {
+        off(gameRef, "value", gameListener);
+      }
+    };
+  }, [route.params]);
 
-const handleStartGame = () => {
+  const handleStartGame = () => {
     const db = getDatabase();
     const gameRef = ref(db, `games/${code}`);
 
     update(gameRef, {
-    status: 'started',
+      status: "started",
     })
-    .then(() => {
-        navigation.navigate('Question', { code });
-    })
-    .catch((error) => {
-        console.log('Error starting the game:', error);
-    });
-};
+      .then(() => {
+        navigation.navigate("Question", { code });
+      })
+      .catch((error) => {
+        console.log("Error starting the game:", error);
+      });
+  };
 
-const handleLeaveLobby = () => {
+  const handleLeaveLobby = () => {
     const db = getDatabase();
     const playerRef = ref(db, `games/${code}/players/${name}`);
-
+    const votesRef = ref(db, `games/${code}/currentVotes/${name}`);
     remove(playerRef)
-    .then(() => {
-        navigation.navigate('Start');
-    })
-    .catch((error) => {
-        console.log('Error leaving the lobby:', error);
-    });
-};
+      .then(() => {
+        remove(votesRef)
+          .then(() => {
+            navigation.navigate("Start");
+          })
+          .catch((error) => {
+            console.log("Error leaving the lobby:", error);
+          });
+      })
+      .catch((error) => {
+        console.log("Error leaving the lobby:", error);
+      });
+  };
 
-return (
+  return (
     <View style={styles.container}>
-    <Text style={styles.title}>Lobby</Text>
-    <Text style={styles.code}>Code: {code}</Text>
-    <View style={styles.grid}>
+      <Text style={styles.title}>Lobby</Text>
+      <Text style={styles.code}>Code: {code}</Text>
+      <View style={styles.grid}>
         {players.map((player, index) => (
-        <View key={index} style={[styles.gridItem, index === 0 && styles.firstGridItem]}>
+          <View
+            key={index}
+            style={[styles.gridItem, index === 0 && styles.firstGridItem]}
+          >
             <Text style={styles.playerName}>{player.name}</Text>
-        </View>
+          </View>
         ))}
-    </View>
-    <View style={styles.buttonContainer}>
+      </View>
+      <View style={styles.buttonContainer}>
         <TouchableOpacity style={styles.button} onPress={handleLeaveLobby}>
-        <Text style={styles.buttonText}>Leave</Text>
+          <Text style={styles.buttonText}>Leave</Text>
         </TouchableOpacity>
         {name === creator && (
-        <TouchableOpacity style={styles.button} onPress={handleStartGame}>
+          <TouchableOpacity style={styles.button} onPress={handleStartGame}>
             <Text style={styles.buttonText}>Start</Text>
-        </TouchableOpacity>
+          </TouchableOpacity>
         )}
+      </View>
     </View>
-    </View>
-);
-}  
+  );
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#f8f1ff',
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#f8f1ff",
     padding: 20,
   },
   title: {
     fontSize: 36,
-    fontWeight: 'bold',
-    color: '#9674B4',
+    fontWeight: "bold",
+    color: "#9674B4",
     marginBottom: 20,
   },
   code: {
     fontSize: 20,
-    color: '#9674B4',
+    color: "#9674B4",
     marginBottom: 20,
   },
   name: {
     fontSize: 18,
-    color: '#9674B4',
+    color: "#9674B4",
     marginBottom: 20,
   },
   grid: {
-    width: '100%',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
+    width: "100%",
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
     marginBottom: 20,
   },
   gridItem: {
-    width: '40%',
+    width: "40%",
     margin: 5,
     padding: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#a3a5c3',
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#a3a5c3",
     borderRadius: 5,
   },
   firstGridItem: {
-    backgroundColor: '#9674B4', // Lighter color for the first item
+    backgroundColor: "#9674B4", // Lighter color for the first item
   },
   playerName: {
-    color: 'white',
+    color: "white",
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   buttonContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     padding: 20,
-    justifyContent: 'space-between',
-    width: '100%',
+    justifyContent: "space-between",
+    width: "100%",
   },
   button: {
-    backgroundColor: '#9674B4',
+    backgroundColor: "#9674B4",
     padding: 10,
     borderRadius: 25,
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '40%',
+    alignItems: "center",
+    justifyContent: "center",
+    width: "40%",
   },
   buttonText: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
   },
 });

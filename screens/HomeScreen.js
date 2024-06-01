@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { initializeApp, getApps } from 'firebase/app';
-import { 
+import React, { useEffect, useState } from "react";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { initializeApp, getApps } from "firebase/app";
+import {
   FIREBASE_API_KEY,
   FIREBASE_AUTH_DOMAIN,
   FIREBASE_DATABASE_URL,
@@ -9,8 +9,8 @@ import {
   FIREBASE_STORAGE_BUCKET,
   FIREBASE_MESSAGING_SENDER_ID,
   FIREBASE_APP_ID,
-  FIREBASE_MEASUREMENT_ID 
-} from '@env';
+  FIREBASE_MEASUREMENT_ID,
+} from "@env";
 
 const firebaseConfig = {
   apiKey: FIREBASE_API_KEY,
@@ -20,21 +20,21 @@ const firebaseConfig = {
   storageBucket: FIREBASE_STORAGE_BUCKET,
   messagingSenderId: FIREBASE_MESSAGING_SENDER_ID,
   appId: FIREBASE_APP_ID,
-  measurementId: FIREBASE_MEASUREMENT_ID
+  measurementId: FIREBASE_MEASUREMENT_ID,
 };
 
 function HomeScreen({ navigation }) {
-  const [name, setName] = useState('');
+  const [name, setName] = useState("");
 
   const handleStartGame = () => {
-    navigation.navigate('Start');
+    navigation.navigate("Start");
   };
 
   useEffect(() => {
     if (!getApps().length) {
       app = initializeApp(firebaseConfig);
     }
-  }, [])
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -49,30 +49,30 @@ function HomeScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     padding: 20,
-    backgroundColor: '#f8f1ff',
+    backgroundColor: "#f8f1ff",
   },
   title: {
     fontSize: 36,
-    fontWeight: 'bold',
-    color: '#9674B4',
+    fontWeight: "bold",
+    color: "#9674B4",
     marginBottom: 20,
   },
   button: {
-    backgroundColor: '#9674B4',
+    backgroundColor: "#9674B4",
     padding: 15,
     borderRadius: 25,
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '60%',
+    alignItems: "center",
+    justifyContent: "center",
+    width: "60%",
     marginVertical: 10,
   },
   buttonText: {
-    color: 'white',
+    color: "white",
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 });
 
