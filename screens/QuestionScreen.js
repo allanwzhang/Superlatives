@@ -11,9 +11,7 @@ import {
   ref,
   onValue,
   update,
-  push,
   child,
-  off,
 } from "firebase/database";
 
 function QuestionScreen({ navigation, route }) {
@@ -21,9 +19,10 @@ function QuestionScreen({ navigation, route }) {
   const [players, setPlayers] = useState([]);
   const [question, setQuestion] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { code } = route.params;
+  const { code, name } = route.params;
 
   useEffect(() => {
+    setIsSubmitting(false);
     const db = getDatabase();
     const gameRef = ref(db, `games/${code}`);
 
@@ -50,17 +49,17 @@ function QuestionScreen({ navigation, route }) {
     const statusListener = onValue(statusRef, (snapshot) => {
       const status = snapshot.val();
       if (status === "showResults") {
-        navigation.navigate("Results", { code });
+        navigation.navigate("Results", { code: code, name: name });
       }
     });
 
     // Clean up listeners
     return () => {
-      off(playersRef, "value", playersListener);
-      off(questionRef, "value", questionListener);
-      off(statusRef, "value", statusListener);
+      playersListener();
+      questionListener();
+      statusListener();
     };
-  }, [code]);
+  }, [code, route]);
 
   const handleSelectAnswer = (answer) => {
     setSelectedAnswer(answer);
@@ -72,65 +71,34 @@ function QuestionScreen({ navigation, route }) {
     const gameRef = ref(db, `games/${code}`);
 
     // Update the player's answer in the database
-    const answerRef = child(gameRef, `answers/${selectedAnswer}`);
-    push(answerRef, selectedAnswer).then(() => {
-      // Update the status to show results if all players have submitted answers
-      const playersRef = child(gameRef, "players");
-      const answersRef = child(gameRef, "answers");
-
-      onValue(
-        playersRef,
-        (playersSnapshot) => {
-          const players = playersSnapshot.val();
-          const totalPlayers = players ? Object.keys(players).length : 0;
-
-          onValue(
-            answersRef,
-            (answersSnapshot) => {
-              const answers = answersSnapshot.val();
-              const totalAnswers = answers ? Object.keys(answers).length : 0;
-
-              if (totalAnswers === totalPlayers && totalPlayers > 0) {
-                // Calculate scores
-                const newScores = {};
-                Object.values(answers).forEach((playerAnswers) => {
-                  Object.values(playerAnswers).forEach((answer) => {
-                    if (!newScores[answer]) {
-                      newScores[answer] = 0;
-                    }
-                    newScores[answer] += 1; // Adjust scoring logic as needed
-                  });
-                });
-
-                // Update scores in the database
-                const scoresRef = child(gameRef, "scores");
-                onValue(
-                  scoresRef,
-                  (scoresSnapshot) => {
-                    const scores = scoresSnapshot.val() || {};
-                    Object.keys(newScores).forEach((player) => {
-                      if (scores[player]) {
-                        scores[player].points += newScores[player];
-                      } else {
-                        scores[player] = {
-                          name: player,
-                          points: newScores[player],
-                        };
-                      }
-                    });
-
-                    update(gameRef, { scores, status: "showResults" });
-                  },
-                  { onlyOnce: true }
-                );
-              }
-            },
-            { onlyOnce: true }
-          );
-        },
-        { onlyOnce: true }
-      );
-    });
+    const currAnswerRef = child(gameRef, "answers");
+    update(currAnswerRef, {
+        [name]: selectedAnswer,
+      })
+      .then(() => {
+        // Update the status to show results if all players have submitted answers
+        const playersRef = child(gameRef, "players");
+        const answersRef = child(gameRef, "answers");
+        onValue(
+          playersRef,
+          (playersSnapshot) => {
+            const players = playersSnapshot.val();
+            const totalPlayers = players ? Object.keys(players).length : 0;
+            onValue(
+              answersRef,
+              (answersSnapshot) => {
+                const answers = answersSnapshot.val();
+                const totalAnswers = answers ? Object.keys(answers).length : 0;
+                if (totalAnswers === totalPlayers && totalPlayers > 0) {
+                  update(gameRef, { status: "showResults" });
+                }
+              },
+              { onlyOnce: true }
+            );
+          },
+          { onlyOnce: true }
+        );
+      });
   };
 
   return (

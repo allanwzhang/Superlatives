@@ -1,63 +1,42 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-import { initializeApp } from "firebase/app";
-import {
-  getDatabase,
-  ref,
-  onValue,
-  update,
-  push,
-  remove,
-} from "firebase/database";
+import { getDatabase, ref, onValue, update, remove } from "firebase/database";
+import { getQuestion } from "../functions/getQuestion";
 
 function LobbyScreen({ navigation, route }) {
-  const [code, setCode] = useState(0);
-  const [name, setName] = useState("");
+  const { code, name } = route.params;
   const [players, setPlayers] = useState([]);
   const [creator, setCreator] = useState("");
   const [status, setStatus] = useState("waiting");
 
   useEffect(() => {
-    let gameRef;
-    let gameListener;
+    const db = getDatabase();
+    // Reference to the game's data in the database
+    const gameRef = ref(db, `games/${route.params.code}`);
 
-    if (route.params && route.params.name) {
-      setName(route.params.name);
-      if (route.params.code) {
-        setCode(route.params.code);
+    // Listen for changes in the game's data
+    const gameListener = onValue(gameRef, (snapshot) => {
+      const gameData = snapshot.val();
+      if (gameData) {
+        if (gameData.players && Object.keys(gameData.players).length !== 0) {
+          setPlayers(Object.values(gameData.players));
+          setCreator(Object.values(gameData.players)[0].name);
+          setStatus(gameData.status);
 
-        const db = getDatabase();
-
-        // Reference to the game's data in the database
-        gameRef = ref(db, `games/${route.params.code}`);
-
-        // Listen for changes in the game's data
-        gameListener = onValue(gameRef, (snapshot) => {
-          const gameData = snapshot.val();
-          if (gameData) {
-            if (
-              gameData.players &&
-              Object.keys(gameData.players).length !== 0
-            ) {
-              setPlayers(Object.values(gameData.players));
-              setCreator(Object.values(gameData.players)[0].name);
-              setStatus(gameData.status);
-
-              // If the game has started, navigate to the Question screen
-              if (gameData.status === "started") {
-                navigation.navigate("Question", { code: route.params.code });
-              }
-            } else {
-              console.log("no players");
-            }
+          // If the game has started, navigate to the Question screen
+          if (gameData.status === "started") {
+            navigation.navigate("Question", {
+              code: code,
+              name: name,
+            });
           }
-        });
+        } else {
+          console.log("no players");
+        }
       }
-    }
+    });
     return () => {
-      if (gameRef && gameListener) {
-        off(gameRef, "value", gameListener);
-      }
+      gameListener();
     };
   }, [route.params]);
 
@@ -65,15 +44,10 @@ function LobbyScreen({ navigation, route }) {
     const db = getDatabase();
     const gameRef = ref(db, `games/${code}`);
 
+    getQuestion(code)
     update(gameRef, {
       status: "started",
     })
-      .then(() => {
-        navigation.navigate("Question", { code });
-      })
-      .catch((error) => {
-        console.log("Error starting the game:", error);
-      });
   };
 
   const handleLeaveLobby = () => {

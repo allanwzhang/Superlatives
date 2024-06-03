@@ -36,11 +36,11 @@ function JoinCodeScreen({ navigation, route }) {
           // Game exists, add or update player in the players list
           const gameData = snapshot.val();
           const playersRef = ref(db, `games/${code}/players`);
-          const currentVotesRef = ref(db, `games/${code}/currentVotes`);
+          const answersRef = ref(db, `games/${code}/answers`);
 
           const players = gameData.players ? { ...gameData.players } : {};
-          const currentVotes = gameData.currentVotes
-            ? { ...gameData.currentVotes }
+          const currentAnswers = gameData.currentAnswers
+            ? { ...gameData.currentAnswers }
             : {};
 
           if (players[name]) {
@@ -50,11 +50,11 @@ function JoinCodeScreen({ navigation, route }) {
           } else {
             // Add player if not already in the list
             players[name] = { name: name, score: 0 };
-            currentVotes[name] = 0; // Initialize votes for new player
+            // currentAnswers[name] = ""; // Initialize votes for new player
 
             update(playersRef, players)
               .then(() => {
-                update(currentVotesRef, currentVotes)
+                update(answersRef, currentAnswers)
                   .then(() => {
                     setIsLoading(false);
                     // Navigate to the lobby screen

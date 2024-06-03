@@ -6,46 +6,75 @@ import {
   FlatList,
   TouchableOpacity,
 } from "react-native";
-import { getDatabase, ref, onValue, update, child } from "firebase/database";
+import {
+  getDatabase,
+  ref,
+  onValue,
+  update,
+  child,
+  remove,
+} from "firebase/database";
+import { getQuestion } from "../functions/getQuestion";
 
 function ScoreboardScreen({ navigation, route }) {
   const [scores, setScores] = useState([]);
   const [round, setRound] = useState(0);
-  const { code } = route.params;
+  const { code, name } = route.params;
 
+  //Fetch scores
   useEffect(() => {
     const db = getDatabase();
     const gameRef = ref(db, `games/${code}`);
 
-    // Fetch scores
-    const scoresRef = child(gameRef, "scores");
-    onValue(scoresRef, (snapshot) => {
-      const fetchedScores = [];
-      snapshot.forEach((childSnapshot) => {
-        const playerScore = childSnapshot.val();
-        fetchedScores.push(playerScore);
-      });
-      setScores(fetchedScores);
+    // Listen for status changes
+    const statusRef = child(gameRef, "status");
+    const statusListener = onValue(statusRef, (snapshot) => {
+      const status = snapshot.val();
+      if (status == "end") {
+        navigation.navigate("Winner", { code: code, name: name });
+      }
+      if (status == "question") {
+        navigation.navigate("Question", { code: code, name: name });
+      }
     });
+
+    const playersRef = child(gameRef, "players");
+    onValue(
+      playersRef,
+      (playersSnapshot) => {
+        const players = playersSnapshot.val() || {};
+
+        let newScores = [];
+        Object.entries(players).forEach(([name, playerData]) => {
+          newScores.push(playerData);
+        });
+        newScores.sort((a, b) => b.score - a.score);
+        setScores(newScores);
+      },
+      { onlyOnce: true }
+    );
 
     // Fetch current round
     const roundRef = child(gameRef, "currentRound");
-    onValue(roundRef, (snapshot) => {
-      const fetchedRound = snapshot.val();
-      setRound(fetchedRound);
-    });
+    onValue(
+      roundRef,
+      (snapshot) => {
+        const fetchedRound = snapshot.val();
+        setRound(fetchedRound);
+      },
+      { onlyOnce: true }
+    );
 
     // Clean up listeners
     return () => {
-      onValue(scoresRef, null);
-      onValue(roundRef, null);
+      statusListener();
     };
   }, [code]);
 
   const renderItem = ({ item }) => (
     <View style={styles.item}>
       <Text style={styles.name}>{item.name}</Text>
-      <Text style={styles.points}>{item.points}</Text>
+      <Text style={styles.points}>{item.score}</Text>
     </View>
   );
 
@@ -54,13 +83,24 @@ function ScoreboardScreen({ navigation, route }) {
     const gameRef = ref(db, `games/${code}`);
 
     if (round >= 5) {
-      navigation.navigate("Winner", { code });
+      update(gameRef, {
+        status: "end",
+      });
     } else {
       // Increment the current round in the database
+      // Delete all answers, increment round, pick new question, update status
       update(gameRef, {
         currentRound: round + 1,
       });
-      navigation.navigate("Question", { code });
+      update(gameRef, {
+        currentQuestion: "What's your favorite food?",
+      });
+      getQuestion(code)
+      update(gameRef, {
+        status: "question",
+      });
+      answersRef = child(gameRef, "answers");
+      remove(answersRef);
     }
   };
 

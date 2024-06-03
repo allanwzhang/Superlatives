@@ -1,25 +1,51 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { getDatabase, ref, onValue, update, child } from "firebase/database";
+import { getQuestion } from "../functions/getQuestion";
 
 function WinnerScreen({ navigation, route }) {
   const [winner, setWinner] = useState("");
-  const { code } = route.params;
+  const { code, name } = route.params;
 
   useEffect(() => {
     const db = getDatabase();
     const gameRef = ref(db, `games/${code}`);
 
-    // Fetch the winner
-    const winnerRef = child(gameRef, "winner");
-    onValue(winnerRef, (snapshot) => {
-      const fetchedWinner = snapshot.val();
-      setWinner(fetchedWinner);
+    // Listen for status changes
+    const statusRef = child(gameRef, "status");
+    const statusListener = onValue(statusRef, (snapshot) => {
+      const status = snapshot.val();
+      if (status == "waiting") {
+        navigation.navigate("Lobby", { code: code, name: name });
+      }
+      if (status == "video") {
+        navigation.navigate("Video", { code: code, name: name });
+      }
     });
 
-    // Clean up listener
+    // Fetch the winner
+    const playersRef = child(gameRef, "players");
+    onValue(
+      playersRef,
+      (playersSnapshot) => {
+        const players = playersSnapshot.val() || {};
+
+        let max = 0;
+        let currWinner = "";
+        Object.entries(players).forEach(([name, playerData]) => {
+          if (playerData.score > max) {
+            max = playerData.score;
+            currWinner = name;
+          }
+        });
+        setWinner(currWinner);
+      },
+      { onlyOnce: true }
+    );
+
+    // Clean up listeners
     return () => {
-      onValue(winnerRef, null);
+      statusListener();
     };
   }, [code]);
 
@@ -28,18 +54,38 @@ function WinnerScreen({ navigation, route }) {
     const gameRef = ref(db, `games/${code}`);
 
     // Reset the game data in the Firebase Realtime Database
+    const playersRef = child(gameRef, "players");
+    onValue(
+      playersRef,
+      (snapshot) => {
+        const players = snapshot.val();
+
+        if (players) {
+          const updates = {};
+          Object.keys(players).forEach((playerName) => {
+            updates[`/players/${playerName}/score`] = 0;
+          });
+          // Update all scores to 0
+          update(gameRef, updates);
+        }
+      },
+      { onlyOnce: true }
+    );
+    getQuestion(code)
     update(gameRef, {
       currentRound: 1,
-      currentQuestion: "What is your favorite color?",
       answers: {},
-      winner: "",
+      results: {},
+      status: "waiting",
     });
-
-    navigation.navigate("Lobby", { code });
   };
 
   const handleVideo = () => {
-    navigation.navigate("Video", { code });
+    const db = getDatabase();
+    const gameRef = ref(db, `games/${code}`);
+    update(gameRef, {
+      status: "video",
+    });
   };
 
   return (

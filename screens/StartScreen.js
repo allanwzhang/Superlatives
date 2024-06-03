@@ -34,8 +34,7 @@ function StartScreen({ navigation }) {
       const gameData = {
         players: { [name]: { name: name, score: 0 } }, //Players and scores are combined into one
         currentRound: 1,
-        currentQuestion: "What is your favorite color?",
-        currentVotes: { [name]: 0 },
+        currentQuestion: "",
         status: "waiting",
       };
 
